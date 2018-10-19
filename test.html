@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+</head>
+<body>
+    
+<video src="" autoplay="autoplay" id="localVideo"></video>
+    <script>
+        let peerConnection = new RTCPeerConnection(),
+            iceCantidate = window.RTCIceCandidate,
+            sessianDescrition =  window.RTCSessionDescription;
+        console.log(sessianDescrition);
+
+        let pc = new peerConnection();
+        pc.addStream(media);
+        // Соединение клиентов, тоже отправляется в сигнальный сервер
+        pc.onicecandidate  = function(event) { 
+            if (event.candidate) {
+                sendMessage({
+                    type: 'candidate',
+                    label: event.candidate.sdpMLineIndex,
+                    id: event.candidate.sdpMid,
+                    candidate: event.candidate.candidate
+                });
+            }
+        }
+        pc.onaddstream = function() {
+
+        }
+        // это инициализация сессии
+        function createOffer() {
+            pc.createOffer(
+                {
+                    'mandatory': { 'OfferToReceiveAudio': true, 'OfferToReceiveVideo': true }
+                },
+                gotLocalDescription,
+                function (err) { 
+                    console.log(err);
+                }
+            )
+        }
+        // отправляет собеседник сразу после получения 
+        function createAnswer() {
+            pc.createAnswer(
+            { 'mandatory': { 'OfferToReceiveAudio': true, 'OfferToReceiveVideo': true } },
+            gotLocalDescription,
+            function(error) { console.log(error) }
+            );
+        }
+
+    
+        navigator.getUserMedia({
+            'audio': true,
+            'video': true
+        }, successGetMedia, failedGetMedia);
+
+        function successGetMedia(media) {
+            console.log(media);
+            // document.getElementById('localVideo').src = window.URL.createObjectURL(media);
+            document.getElementById('localVideo').controls = true;
+        }
+        function failedGetMedia() {
+            console.log('fail');
+        }
+
+        // Получение сообщений от сервера
+        var socket = io.connect('', {port: 1234});
+
+        socket.on('message', function (message){
+        if (message.type === 'offer') {
+            pc.setRemoteDescription(new SessionDescription(message));
+            createAnswer();
+        } 
+        else if (message.type === 'answer') {
+            pc.setRemoteDescription(new SessionDescription(message));
+        } 
+        else if (message.type === 'candidate') {
+            var candidate = new IceCandidate({sdpMLineIndex: message.label, candidate: message.candidate});
+            pc.addIceCandidate(candidate);
+        }
+        });
+
+        function gotRemoteStream(event){
+            document.getElementById("remoteVideo").src = URL.createObjectURL(event.stream);
+        }
+    </script>
+</body>
+</html>
