@@ -1,0 +1,17 @@
+{
+  "name": "videochat",
+  "version": "1.0.0",
+  "description": "Video connect WebRTC",
+  "main": "server.js",
+  "scripts": {
+    "test": "node server.js",
+    "start": "node server.js"
+  },
+  "author": "Doctor Maxin",
+  "license": "ISC",
+  "dependencies": {
+    "node-static": "^0.7.11",
+    "socket.io": "^2.1.1",
+    "webrtc.io": "0.0.4"
+  }
+}
