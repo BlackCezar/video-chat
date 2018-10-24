@@ -5,12 +5,13 @@
   "main": "server.js",
   "scripts": {
     "test": "node server.js",
-    "start": "node server.js"
+    "start": "nodemon test.js"
   },
   "author": "Doctor Maxin",
   "license": "ISC",
   "dependencies": {
     "node-static": "^0.7.11",
+    "nodemon": "^1.18.4",
     "socket.io": "^2.1.1",
     "webrtc.io": "0.0.4"
   }
