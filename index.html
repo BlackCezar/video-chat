@@ -61,7 +61,8 @@
     }
     
     function remoteVideo(event) {
-        document.getElementById('remote').srcObject = event.stream;
+        console.log(event);
+        document.getElementById('remote').srcObject = event.streams[0];
         console.log("CONNECTED");
     }
 
