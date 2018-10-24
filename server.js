@@ -11,7 +11,6 @@ var io = require('socket.io').listen(app);
 
 io.sockets.on('connection', function (socket) {
 	function log() {
-		console.log('arg: ', arguments);
 		var array = [">>> "];
 		for(var i = 0; i < arguments.length; i++) {
 			array.push(arguments[i]);
