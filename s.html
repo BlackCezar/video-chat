@@ -1,0 +1,109 @@
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+</head>
+<body>
+    <video id="remote" autoplay="autoplay"></video>
+    <video id="local" autoplay="autoplay"></video>
+    <button id="btn">Отправить запрос</button>
+    <input type="checkbox" checked name="" id="manager">
+    <button id="btnAdd">Add manager</button>
+</body>
+<script src="/socket.io/socket.io.js"></script>
+<script>
+    
+    
+    let socket = io.connect('', {port: 8080});
+
+    let manager = document.getElementById('manager').checked;
+    document.getElementById('btnAdd').onclick = function () {
+        socket.emit('manager', {'manager': manager});
+    }
+    
+    let btn = document.getElementById('btn').onclick = findManager;
+    
+    function findManager () {
+        socket.emit('find', {find: true});
+    }
+    
+    let RTCPeerCon = new RTCPeerConnection({
+  'iceServers': [
+    {
+      'urls': 'stun:stun.l.google.com:19302'
+    },
+    {
+      'urls': 'turn:192.158.29.39:3478?transport=udp',
+      'credential': 'JZEOEt2V3Qb0y27GRntt2u2PAYA=',
+      'username': '28224511:1379330808'
+    },
+    {
+      'urls': 'turn:192.158.29.39:3478?transport=tcp',
+      'credential': 'JZEOEt2V3Qb0y27GRntt2u2PAYA=',
+      'username': '28224511:1379330808'
+    }
+  ]
+});
+    RTCPeerCon.ontrack = remoteVideo;
+    RTCPeerCon.onicecandidate = iceCandidate;
+
+    navigator.mediaDevices.getUserMedia({audio: false, video: true}).then(getConnection).catch(err => {console.log('Error on media', err)});
+    function getConnection(media) {
+        console.log(media);
+        document.getElementById('local').srcObject = media;
+        RTCPeerCon.addStream(media);
+
+    }
+    
+    function createOffer() {
+        let promiseCreateOffer = RTCPeerCon.createOffer({ 'mandatory': { 'OfferToReceiveAudio': false, 'OfferToReceiveVideo': true } });
+        promiseCreateOffer.then(setDecrition).catch(err => {console.log(err)});
+    }
+    function createAnswer() {
+        let promiseCreateAnswer = RTCPeerCon.createAnswer({ 'mandatory': { 'OfferToReceiveAudio': false, 'OfferToReceiveVideo': true } });
+        promiseCreateAnswer.then(setDecrition).catch(err => {console.log(err)});
+    }
+    function setDecrition (des) {
+        RTCPeerCon.setLocalDescription(des);
+        console.log(RTCPeerCon);
+        socket.emit('msg', des);
+    }
+    
+    function iceCandidate(event) {
+        if (event.candidate) {
+            socket.emit('candidate', event.candidate);
+        }
+    }
+    
+    function remoteVideo(event) {
+        console.log(event.streams[0]);
+        document.getElementById('local').srcObject = event.streams[0];
+        console.log( document.getElementById('local').srcObject);
+        console.log("CONNECTED");
+    }
+
+    socket.on('msg', data => {
+        console.log('msg', data);   
+        switch (data.type) {
+            case 'offer': RTCPeerCon.setRemoteDescription(data); createAnswer(data); break;
+            case 'answer': RTCPeerCon.setRemoteDescription(data); break;
+        }
+    })
+    socket.on('candidate', candidateData => {
+        let candidate = new RTCIceCandidate(candidateData);
+        RTCPeerCon.addIceCandidate(candidate).catch(console.log('ERROR ON CANDIDATE'));
+    })
+    socket.on('notification', (userid) => {
+        let answer = confirm('Пользователь хочет подключиться');
+        if (answer) {
+            socket.emit('find', {'managerForUserId': userid});
+        }
+    })
+    socket.on('response', (managerId) => {
+        socket.emit('find', {id: managerId});
+        createOffer();
+    })
+</script>
+</html>

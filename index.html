@@ -1,97 +1,118 @@
-<html lang="en">
+<!DOCTYPE html>
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>Document</title>
+  <meta charset="UTF-8">
+  <style type="text/css">
+    html { height: 100%; }
+    body { height: 100%; margin: 0; background: #111; text-align: center; }
+    #remoteVideo { height: 70%; margin-top: 5%; background: #000; }
+    #localVideo { width: 20%; position: absolute; right: 1.1em; bottom: 1em; border: 1px solid #333; background: #000; }
+    #callButton { position: absolute; display: none; left: 50%; font-size: 2em; bottom: 5%; border-radius: 1em; }
+  </style>
 </head>
-<body>
-    <video id="remote" autoplay="autoplay"></video>
-    <video id="local" autoplay="autoplay"></video>
-    <button id="btn">Отправить запрос</button>
-    <input type="checkbox" checked name="" id="manager">
-    <button id="btnAdd">Add manager</button>
-</body>
 <script src="/socket.io/socket.io.js"></script>
+
+<video id="localVideo" autoplay muted></video>
+<video id="remoteVideo" autoplay></video>
+<button id="callButton" onclick="createOffer()">✆</button>
+
+
+
 <script>
-    
-    
-    let socket = io.connect('', {port: 8080});
+var PeerConnection = window.mozRTCPeerConnection || window.webkitRTCPeerConnection;
+var IceCandidate = window.mozRTCIceCandidate || window.RTCIceCandidate;
+var SessionDescription = window.mozRTCSessionDescription || window.RTCSessionDescription;
+if (!navigator.mediaDevices.getUserMedia) {
+  navigator.mediaDevices.getUserMedia = navigator.mediaDevices.getUserMedia || navigator.mediaDevices.mozGetUserMedia || navigator.mediaDevices.webkitGetUserMedia || navigator.getUserMedia;
+}
 
-    let manager = document.getElementById('manager').checked;
-    document.getElementById('btnAdd').onclick = function () {
-        socket.emit('manager', {'manager': manager});
-    }
-    
-    let btn = document.getElementById('btn').onclick = findManager;
-    
-    function findManager () {
-        socket.emit('find', {find: true});
-    }
-    
-    let RTCPeerCon = new RTCPeerConnection();
-    RTCPeerCon.ontrack = remoteVideo;
-    RTCPeerCon.onicecandidate = iceCandidate;
+var pc; // PeerConnection
 
-    navigator.mediaDevices.getUserMedia({audio: false, video: true}).then(getConnection).catch(err => {console.log('Error on media', err)});
-    function getConnection(media) {
-        console.log(media);
-        document.getElementById('local').srcObject = media;
-        RTCPeerCon.addStream(media);
 
-    }
-    
-    function createOffer() {
-        let promiseCreateOffer = RTCPeerCon.createOffer({ 'mandatory': { 'OfferToReceiveAudio': false, 'OfferToReceiveVideo': true } });
-        promiseCreateOffer.then(setDecrition).catch(err => {console.log(err)});
-    }
-    function createAnswer() {
-        let promiseCreateAnswer = RTCPeerCon.createAnswer({ 'mandatory': { 'OfferToReceiveAudio': false, 'OfferToReceiveVideo': true } });
-        promiseCreateAnswer.then(setDecrition).catch(err => {console.log(err)});
-    }
-    function setDecrition (des) {
-        RTCPeerCon.setLocalDescription(des);
-        console.log(RTCPeerCon);
-        socket.emit('msg', des);
-    }
-    
-    function iceCandidate(event) {
-        if (event.candidate) {
-            socket.emit('candidate', event.candidate);
-        }
-    }
-    
-    function remoteVideo(event) {
-        console.log(event.streams[0]);
-        
-        try {
-            document.getElementById('remote').srcObject = event.streams[0];
-            } catch (error) {
-                document.getElementById('remote').src = URL.createObjectURL(event.streams[0]);
-            }
-        console.log("CONNECTED");
-    }
+// Step 1. getUserMedia
+navigator.mediaDevices.getUserMedia(
+  { audio: true, video: true }).then(gotStream, function (error) {console.log('er on getUserMedia: ' + error)});
 
-    socket.on('msg', data => {
-        console.log('msg', data);   
-        switch (data.type) {
-            case 'offer': RTCPeerCon.setRemoteDescription(data); createAnswer(data); break;
-            case 'answer': RTCPeerCon.setRemoteDescription(data); break;
-        }
-    })
-    socket.on('candidate', candidateData => {
-        let candidate = new RTCIceCandidate(candidateData);
-        RTCPeerCon.addIceCandidate(candidate).catch(console.log('ERROR ON CANDIDATE'));
-    })
-    socket.on('notification', (userid) => {
-        let answer = confirm('Пользователь хочет подключиться');
-        if (answer) {
-            socket.emit('find', {'managerForUserId': userid});
-        }
-    })
-    socket.on('response', (managerId) => {
-        socket.emit('find', {id: managerId});
-        createOffer();
-    })
+function gotStream(stream) {
+  document.getElementById("callButton").style.display = 'inline-block';
+  document.getElementById("localVideo").srcObject = stream;
+
+  pc = new PeerConnection(null);
+  pc.addStream(stream);
+  pc.onicecandidate = gotIceCandidate;
+  pc.ontrack = gotRemoteStream;
+}
+
+
+// Step 2. createOffer
+function createOffer() {
+  console.log('Create Offer');
+  pc.createOffer(
+    gotLocalDescription, 
+    function(error) { console.log(error) }, 
+    { 'mandatory': { 'OfferToReceiveAudio': true, 'OfferToReceiveVideo': true } }
+  );
+}
+
+
+// Step 3. createAnswer
+function createAnswer() {
+  console.log('Create Answer');
+  pc.createAnswer(
+    gotLocalDescription,
+    function(error) { console.log(error) }, 
+    { 'mandatory': { 'OfferToReceiveAudio': true, 'OfferToReceiveVideo': true } }
+  );
+}
+
+
+function gotLocalDescription(description){
+  console.log('gotLocalDescription: ', description);
+  pc.setLocalDescription(description);
+  sendMessage(description);
+}
+
+function gotIceCandidate(event){
+  console.log('gotIceCandidate, event: ', event);
+  if (event.candidate) {
+    sendMessage({
+      type: 'candidate',
+      label: event.candidate.sdpMLineIndex,
+      id: event.candidate.sdpMid,
+      candidate: event.candidate.candidate
+    });
+  }
+}
+
+function gotRemoteStream(event){
+  console.log(event.stream);
+  document.getElementById("remoteVideo").srcObject = event.stream;
+}
+
+
+////////////////////////////////////////////////
+// Socket.io
+
+var socket = io.connect('', {port: 8080});
+
+function sendMessage(message){
+  socket.emit('message', message);
+}
+
+socket.on('message', function (message){
+  console.log('mes', message);
+  if (message.type === 'offer') {
+    pc.setRemoteDescription(new SessionDescription(message));
+    createAnswer();
+  } 
+  else if (message.type === 'answer') {
+    pc.setRemoteDescription(new SessionDescription(message));
+  } 
+  else if (message.type === 'candidate') {
+    var candidate = new IceCandidate({sdpMLineIndex: message.label, candidate: message.candidate});
+    pc.addIceCandidate(candidate);
+  }
+});
+
 </script>
 </html>
