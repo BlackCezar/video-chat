@@ -30,6 +30,9 @@
     }
     
     let RTCPeerCon = new RTCPeerConnection();
+    RTCPeerCon.ontrack = remoteVideo;
+    RTCPeerCon.onicecandidate = iceCandidate;
+
     navigator.mediaDevices.getUserMedia({audio: false, video: true}).then(getConnection).catch(err => {console.log('Error on media', err)});
     function getConnection(media) {
         document.getElementById('local').srcObject = media;
