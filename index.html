@@ -16,7 +16,7 @@
 <script>
     
     
-    let socket = io.connect('', {port: 8081});
+    let socket = io.connect('', {port: 8080});
 
     let manager = document.getElementById('manager').checked;
     document.getElementById('btnAdd').onclick = function () {
@@ -83,8 +83,5 @@
         socket.emit('find', {id: managerId});
         createOffer();
     })
-    // window.unload = function() {
-    //     socket.disconnet();
-    // }
 </script>
 </html>
