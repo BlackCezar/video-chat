@@ -15,7 +15,7 @@ var managers = [], iterator = 0;
 io.on('connection', function(socket) {
     let remoteId;
     socket.on('msg', data => {
-        socket.broadcast.to(remoteId).emit('msg', data);
+        socket.broadcast.to(`${remoteId}`).emit('msg', data);
     })
     
     socket.on('manager', data => {
