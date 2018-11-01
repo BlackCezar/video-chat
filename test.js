@@ -22,7 +22,9 @@ io.on('connection', function(socket) {
     socket.on('manager', data => {
         if (data.manager) {
 		console.log('before push' , managers);
+		if (managers.indexOf(socket.id) == -1) {
             managers.push(socket.id);
+		}
 		console.log('after push ', managers);
         }
     })
