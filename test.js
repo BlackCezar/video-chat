@@ -21,7 +21,9 @@ io.on('connection', function(socket) {
     
     socket.on('manager', data => {
         if (data.manager) {
+		console.log('before push' , managers);
             managers.push(socket.id);
+		console.log('after push ', managers);
         }
     })
 
@@ -48,7 +50,9 @@ io.on('connection', function(socket) {
 })
 
 function clearManagers (id) {
+	console.log('befor clear ', managers);
     let i = managers.indexOf(id);
     managers.splice(i, 1);
+	console.log('after cler ', managers);
     return managers;
 }
