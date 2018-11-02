@@ -49,18 +49,18 @@
     RTCPeerCon.ontrack = remoteVideo;
     RTCPeerCon.onicecandidate = iceCandidate;
 
-    navigator.mediaDevices.getUserMedia({audio: false, video: true}).then(getConnection).catch(err => {console.log('Error on media', err)});
+    navigator.mediaDevices.getUserMedia({audio: true, video: true}).then(getConnection).catch(err => {console.log('Error on media', err)});
     function getConnection(media) {
         media.getTracks().forEach(track => RTCPeerCon.addTrack(track, media));
         document.getElementById('local').srcObject = media;
     }
     
     function createOffer() {
-        let promiseCreateOffer = RTCPeerCon.createOffer({ 'mandatory': { 'OfferToReceiveAudio': false, 'OfferToReceiveVideo': true } });
+        let promiseCreateOffer = RTCPeerCon.createOffer({ 'mandatory': { 'OfferToReceiveAudio': true, 'OfferToReceiveVideo': true } });
         promiseCreateOffer.then(setDecrition).catch(err => {console.log(err)});
     }
     function createAnswer() {
-        let promiseCreateAnswer = RTCPeerCon.createAnswer({ 'mandatory': { 'OfferToReceiveAudio': false, 'OfferToReceiveVideo': true } });
+        let promiseCreateAnswer = RTCPeerCon.createAnswer({ 'mandatory': { 'OfferToReceiveAudio': true, 'OfferToReceiveVideo': true } });
         promiseCreateAnswer.then(setDecrition).catch(err => {console.log(err)});
     }
     function setDecrition (des) {
