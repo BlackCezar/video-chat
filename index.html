@@ -46,12 +46,19 @@
         {urls: "stun:stun.l.google.com:19302"}
     ]
     });
+    if ('onaddstream' in RTCPeerCon) {
+     RTCPeerCon.onaddstream = remoteVideo;   
+    }
     RTCPeerCon.ontrack = remoteVideo;
+    
     RTCPeerCon.onicecandidate = iceCandidate;
 
     navigator.mediaDevices.getUserMedia({audio: true, video: true}).then(getConnection).catch(err => {console.log('Error on media', err)});
     function getConnection(media) {
-        media.getTracks().forEach(track => RTCPeerCon.addTrack(track, media));
+        media.getTracks().forEach(track => {
+            RTCPeerCon.addTrack(track, media));
+            RTCPeerCon.addStream(track);   
+        }
         document.getElementById('local').srcObject = media;
     }
     
@@ -60,7 +67,7 @@
         promiseCreateOffer.then(setDecrition).catch(err => {console.log(err)});
     }
     function createAnswer() {
-        let promiseCreateAnswer = RTCPeerCon.createAnswer({ 'mandatory': { 'OfferToReceiveAudio': true, 'OfferToReceiveVideo': true } });
+        let promiseCreateAnswer = RTCPeerCon.createAnswer();
         promiseCreateAnswer.then(setDecrition).catch(err => {console.log(err)});
     }
     function setDecrition (des) {
