@@ -1,4 +1,4 @@
-<html lang="en">
+<html lang="ru">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -17,6 +17,7 @@
 <body>
     <video id="remote" autoplay="autoplay"></video>
     <video id="local" autoplay="autoplay"></video>
+    <br>
     <button id="btn">Отправить запрос</button>
     <input type="checkbox" checked name="" id="manager">
     <button id="btnAdd">Add manager</button>
@@ -54,10 +55,14 @@
     RTCPeerCon.onicecandidate = iceCandidate;
 
     navigator.mediaDevices.getUserMedia({audio: true, video: true}).then(getConnection).catch(err => {console.log('Error on media', err)});
+    
     function getConnection(media) {
         media.getTracks().forEach(track => {
+            if ('addTrack' in RTCPeerCon) {
             RTCPeerCon.addTrack(track, media);
-            RTCPeerCon.addStream(track);   
+            } else {
+            RTCPeerCon.addStream(media);
+            }
         })
         document.getElementById('local').srcObject = media;
     }
