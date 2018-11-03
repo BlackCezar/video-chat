@@ -58,7 +58,7 @@
         media.getTracks().forEach(track => {
             RTCPeerCon.addTrack(track, media);
             RTCPeerCon.addStream(track);   
-        }
+        })
         document.getElementById('local').srcObject = media;
     }
     
