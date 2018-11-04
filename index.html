@@ -49,18 +49,18 @@
     });
     if ('onaddstream' in RTCPeerCon) {
      RTCPeerCon.onaddstream = remoteVideo;   
-    }
-    RTCPeerCon.ontrack = remoteVideo;
-    
-    RTCPeerCon.onicecandidate = iceCandidate;
-    navigator.getUserMedia = navigator.mediaDevices.getUserMedia || navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia || navigator.msGetUserMedia
-    if (navigator.getUserMedia) {
-    navigator.getUserMedia({audio: true, video: true}).then(getConnection).catch(err => {console.log('Error on media', err)});
-    
     } else {
-        console.log('Native device media streaming (getUserMedia) not supported in this browser.');
-        // Display a friendly "sorry" message to the user.
+    RTCPeerCon.ontrack = remoteVideo;
     }
+    RTCPeerCon.onicecandidate = iceCandidate;
+    
+    navigator.mediaDevices.getUserMedia({audio: true, video: true}).then(getConnection).catch(err => {
+        navigator.getUserMedia = navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia || navigator.msGetUserMedia
+        navigator.getUserMedia({audio: true, video: true}, getConnection, err => {
+            alert('извините, но произошла ошибка с камерой');
+            console.log(err);
+        }
+    });
     
     function getConnection(media) {
         media.getTracks().forEach(track => {
@@ -101,11 +101,9 @@
         try {
             document.getElementById('remote').srcObject = event.streams[0];
             } catch (error) {
-                document.getElementById('remote').src = URL.createObjectURL(event.stream);
+                document.getElementById('remote').src = window.URL.createObjectURL(event.stream);
             }
         console.log("CONNECTED");
-        document.querySelector('.preload').style.opacity = 0;
-        document.querySelector('.preload').style.zIndex = 0;
     }
 
     socket.on('msg', data => {
