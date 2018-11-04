@@ -53,8 +53,14 @@
     RTCPeerCon.ontrack = remoteVideo;
     
     RTCPeerCon.onicecandidate = iceCandidate;
-
-    navigator.mediaDevices.getUserMedia({audio: true, video: true}).then(getConnection).catch(err => {console.log('Error on media', err)});
+    navigator.getUserMedia = navigator.mediaDevices.getUserMedia || navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia || navigator.msGetUserMedia
+    if (navigator.getUserMedia) {
+    navigator.getUserMedia({audio: true, video: true}).then(getConnection).catch(err => {console.log('Error on media', err)});
+    
+    } else {
+        console.log('Native device media streaming (getUserMedia) not supported in this browser.');
+        // Display a friendly "sorry" message to the user.
+    }
     
     function getConnection(media) {
         media.getTracks().forEach(track => {
@@ -95,8 +101,7 @@
         try {
             document.getElementById('remote').srcObject = event.streams[0];
             } catch (error) {
-                console.log(event);
-                document.getElementById('remote').src = URL.createObjectURL(event.streams);
+                document.getElementById('remote').src = URL.createObjectURL(event.stream);
             }
         console.log("CONNECTED");
         document.querySelector('.preload').style.opacity = 0;
