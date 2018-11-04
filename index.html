@@ -95,7 +95,8 @@
         try {
             document.getElementById('remote').srcObject = event.streams[0];
             } catch (error) {
-                document.getElementById('remote').src = URL.createObjectURL(event.streams[0]);
+                console.log(event);
+                document.getElementById('remote').src = URL.createObjectURL(event.streams);
             }
         console.log("CONNECTED");
         document.querySelector('.preload').style.opacity = 0;
