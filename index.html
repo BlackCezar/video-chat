@@ -59,7 +59,7 @@
         navigator.getUserMedia({audio: true, video: true}, getConnection, err => {
             alert('извините, но произошла ошибка с камерой');
             console.log(err);
-        }
+        })
     });
     
     function getConnection(media) {
