@@ -68,8 +68,14 @@
     navigator.mediaDevices.getUserMedia({audio: true, video: true}).then(getConnection).catch(err => {
         navigator.getUserMedia = navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia || navigator.msGetUserMedia
         navigator.getUserMedia({audio: true, video: true}, getConnection, err => {
+            try {
+            session.createStream({name:'local',display:document.getElementById('myVideo')}).publish();
+            session.createStream({name:'local',display:document.getElementById('myVideo')}).play();
+                getConnection();
+            } catch (err) {
             alert('извините, но произошла ошибка с камерой');
             console.log(err);
+            }
         })
     });
     
