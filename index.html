@@ -15,8 +15,8 @@
       </style>
 </head>
 <body>
-    <video id="remote" controls="controls" autoplay="autoplay"></video>
-    <video id="local" controls="controls" autoplay="autoplay"></video>
+    <video id="remote"  autoplay="autoplay"></video>
+    <video id="local"  autoplay="autoplay"></video>
     <br>
     <button id="btn">Отправить запрос</button>
     <input type="checkbox" checked name="" id="manager">
@@ -35,7 +35,18 @@
         document.querySelector('.preload').style.opacity = 1;
         document.querySelector('.preload').style.zIndex = 10;
     }
-    
+    document.getElementById('remote').onclick = function () {
+     if (this.paused)
+        this.play();
+    else
+        this.pause();   
+    }
+    document.getElementById('local').onclick = function () {
+     if (this.paused)
+        this.play();
+    else
+        this.pause();   
+    }
     let btn = document.getElementById('btn').onclick = findManager;
     
     function findManager () {
